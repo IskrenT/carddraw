@@ -23,7 +23,7 @@ double carddraw(int total, int draw, int outs, int need, int only){
 	double result = 0.0;
 
 	// Covering all the false input cases with probability 0
-	if(total<=0 || draw<=0 || outs<=0 || need<=0 ||
+	if(total<=0 || draw<=0 || outs<=0 || need<0 ||
 		 need > total || need > draw || need > outs 
 		)
 		return 0.0;
@@ -33,14 +33,22 @@ double carddraw(int total, int draw, int outs, int need, int only){
 			return 0.0;
 		return 1.0;
 	}
-
+	//Special case. Complement event. Chance of not drawing any of the outs.
+	if( need == 0 ){
+		if(only){
+			outs = total-outs;
+			need = draw;
+		}else{
+			return 1.0;	// Chance of drawing atleast zero of the outs.
+		}
+	}
 	//Computation of only=true case
 	result += (double)combination(outs,need) * (double)combination(total-outs, draw-need);
 
 	//Computation of only=false case
 	//Adding the events of drawing exactly x outs. ( x = "need+1" trough "outs" )
 	if(!only){
-		while(++need*2<=draw+outs){
+		while(++need<=draw && need <=outs){
 			result+=(double)combination(outs,need) * 
 							(double)combination(total-outs,draw-need);
 		}
