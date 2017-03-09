@@ -50,7 +50,7 @@
 	(when only = true ) there are exactly [need] number of cards from [outs]
 	(when only = false) there are at least [need] number of cards from [outs]
 *
-*   This event can be used to predict probability of possesion of certain
+*   This event can be used to predict probability of possession of certain
 *	cards, probability of drawing certain cards. Or the outcome of a random
 *	event, with some good outs. ( thinking of items instead of cards )
 */
@@ -61,7 +61,7 @@ double carddraw(int total, int draw, int outs, int need, int only);
 * Simple but powerful implementation of finding combinations or binomial
 * coefficients in combinatory mathematics.
 * 
-* CAUTION: NOT SAFE FOR OVERFLOW OR NEGATIVE INPUT
+* The function is safe for overflow returns COMP_OVERFLOW_DBL = -1.0 
 * 
 * @param[in] n	Total cardinality of the set 'items'.
 * @param[in] k	Total cardinality of the subset 'picked'.
@@ -69,7 +69,12 @@ double carddraw(int total, int draw, int outs, int need, int only);
 * @return	The number of possible subsets with cardinality k 
 *			within set with cardinality n.
 */
-int combination(int n,int k);
+double combination(int n,int k);
 /// Produce the probability of the complement of the event. ( NOT EVENT )
 double complement(double probability);
+/// Check if the argument is a finite real number.
+int isfinite(double x);
+/// Defined in carddraw.c
+extern const double COMP_OVERFLOW_DBL; // const double COMP_OVERFLOW_DBL = -1.0;
+
 #endif

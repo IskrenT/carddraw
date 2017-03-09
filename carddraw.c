@@ -18,9 +18,12 @@
 *	Contact: isktark@yahoo.com Iskren Tarkalanov
 */
 #include "carddraw.h"
+
+const double COMP_OVERFLOW_DBL = -1.0;
 /// carddraw function - entry point for the general computation.
 double carddraw(int total, int draw, int outs, int need, int only){
-	double result = 0.0;
+	double nominator = 0.0;
+	double comb1, comb2, denom;
 
 	// Covering all the false input cases with probability 0
 	if(total<=0 || draw<=0 || outs<=0 || need<0 ||
@@ -42,30 +45,29 @@ double carddraw(int total, int draw, int outs, int need, int only){
 			return 1.0;	// Chance of drawing atleast zero of the outs.
 		}
 	}
-	//Computation of only=true case
-	result += (double)combination(outs,need) * (double)combination(total-outs, draw-need);
-
-	//Computation of only=false case
-	//Adding the events of drawing exactly x outs. ( x = "need+1" trough "outs" )
-	if(!only){
-		while(++need<=draw && need <=outs){
-			result+=(double)combination(outs,need) * 
-							(double)combination(total-outs,draw-need);
-		}
-	}
 	//Denominator ( all combination of draws possible )
-	result/=(double)combination(total,draw);
-	return result;
+	denom = combination(total,draw);
+	if( denom == COMP_OVERFLOW_DBL)
+		return COMP_OVERFLOW_DBL;;
+
+	//Computation of only=false executes only first time
+	//Adding the events of drawing exactly x outs. ( x = "need+1" trough "outs" )
+	//All combinations of 
+	do{
+		comb1 = combination(outs,need);
+		comb2 = combination(total-outs, draw-need);
+		nominator += comb1 * comb2;
+	}while(++need<=draw && need <=outs && !only);
+	return nominator/denom;
 }
 /// Combinations in combinatory mathematics.
-int combination(int n, int k){
-	int result = 1;
-	int complement_k;
-		if( !k || k==n ) // one combination when k=0 or k==n
-		return 1;
+double combination(int n, int k){
+	double result = 1;
+	int complement_k, ik, in;
+	if( !k || k==n ) // one combination when k=0 or k==n
+		return 1.0;
 	if( !n || k>n ) //Zero combinations possible when: n=0 or k > n
-		return 0;
-
+		return 0.0;
 
 	//n_C_k and n_C_(n-k) are the same, seek the least 'k'
 	complement_k = n - k;
@@ -73,22 +75,30 @@ int combination(int n, int k){
 		k = complement_k;
 		complement_k = n - k;
 	}
-
-	//Compute nominator
-	do // !(n-k)
-	{
-		result *= n;
-	}while(--n -complement_k); // !(n-k) (factorial)
-
-	//Compute denominator
-	do
-	{
-		result /= k;
-	}while(--k); // !k (factorial)
-
+	//Compute nominator and denominator and check for overflow after multiplication
+	//Compiting both nominator and denominator in the same loop to delay overflow
+	//Expresion is n_C_k = (n-k)!/k!
+	for(ik = 2, in = n; in > complement_k; --in){
+		result *= (double)in;
+		if(!isfinite(result)) // if NaN - overflow
+			return COMP_OVERFLOW_DBL;
+		if(ik<=k)
+		result /=(double)ik++;	
+	}
 	return result;
 }
 /// Produce the probability of the complement of the event. ( NOT EVENT )
 double complement(double probability){
 	return 1.0-probability;
+}
+#if defined _MSC_VER
+  typedef unsigned __int64 uint64;
+#else
+  typedef uint64_t uint64;
+#endif
+int isfinite(double x)
+{
+    union { uint64 i; double d; } u;
+    u.d = x;
+    return ( (unsigned int)(u.i >> 32) & 0x7fffffff ) != 0x7ff00000;
 }
